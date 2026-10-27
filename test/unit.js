@@ -1,3 +1,4 @@
+require('./device-manager');
 const path = require('path');
 const { tests } = require('@iobroker/testing');
 const { expect } = require('chai');

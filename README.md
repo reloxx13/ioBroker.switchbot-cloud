@@ -92,6 +92,7 @@ The following devices are currently supported:
 | **Bot** | Turn On/Off, Press | power, battery |
 | **Curtain** | Turn On/Off, Set Position | slidePosition, moving, battery |
 | **Lock (Smart Lock/Pro/Ultra)** | Lock/Unlock | lockState, battery |
+| **Keypad Touch** | - | battery, version, deviceId, deviceName, deviceType, enableCloudService, hubDeviceId, lockDeviceId, keyList.&lt;keyId&gt;.* |
 | **Meter** | - | temperature, humidity, battery |
 | **Meter Plus (MeterPlus)** | - | temperature, humidity, battery |
 | **Meter Pro (MeterPro)** | - | temperature, humidity, battery |
@@ -105,8 +106,8 @@ The following devices are currently supported:
 | **Motion Sensor** | - | moveDetected, brightness, battery |
 | **Contact Sensor** | - | openState, moveDetected, brightness, battery |
 | **Water Detector** | - | status, battery |
-| **Hub Mini** | - | - |
-| **Hub Mini2** | - | - |
+| **Hub Mini** | - | deviceId, deviceName, deviceType, enableCloudService, hubDeviceId |
+| **Hub Mini2** | - | deviceId, deviceName, deviceType, enableCloudService, hubDeviceId |
 | **Hub 2** | - | temperature, humidity, lightLevel |
 
 ### Infrared Remote Devices
@@ -116,6 +117,12 @@ All infrared remote devices are supported for sending commands:
 - Commands are sent as JSON objects or simple command strings
 
 ### Device Compatibility Notes
+
+Smart Lock Ultra also exposes device-list fields `deviceName`, `enableCloudService`, `group`, `master`, and `groupName` when returned. Associated lock IDs are individual string states under `lockDevicesIds.<index>`; an empty list leaves an empty channel. Removed associations are cleaned up locally. Its `calibrate` Boolean is a read-only indication that the lock has been calibrated, not a command button. Discovery refresh is shared with Hub Mini/Mini2 and Keypad Touch.
+
+Hub Mini and Hub Mini2 expose their device-list fields even when the status endpoint returns no fields. They share the discovery refresh with Keypad Touch (one extra device-list request per polling cycle when any of these devices exists). No firmware value is fabricated: empty legacy `version` objects are removed, while any existing non-null firmware value is preserved.
+
+Keypad Touch publishes read-only status and discovery fields. Each access key has a channel `keyList.<keyId>` containing typed states `id`, `name`, `type`, `status`, `createTime`, `password`, and `iv`. The last two fields retain the API-encrypted values. Key channels and states use admin-owner ACLs (0600). Discovery fields refresh once per polling cycle through an additional device-list request; removed keys and their states are deleted. Earlier PR installations using a JSON `keyList` state migrate automatically to this channel structure. Battery and firmware version have been observed in API responses but may depend on the device/API. Passcode management (`createKey`/`deleteKey`) is not implemented; it requires asynchronous webhook result handling.
 
 - **API Device Types**: The adapter matches devices using exact API `deviceType` values
 - **Fallback Handling**: Unsupported devices are detected but created with minimal functionality
